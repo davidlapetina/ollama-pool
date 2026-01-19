@@ -1,0 +1,58 @@
+# Test configuration for integration tests
+server:
+  port: 8081
+  host: 0.0.0.0
+  backlog: 10
+
+nodes:
+  - id: node-1
+    url: http://localhost:11434
+    models:
+      - llama2
+    maxConcurrentRequests: 5
+    weight: 1
+    enabled: true
+
+  - id: node-2
+    url: http://localhost:11435
+    models:
+      - llama2
+      - codellama
+    maxConcurrentRequests: 3
+    weight: 1
+    enabled: true
+
+strategy:
+  type: round-robin
+  adaptive: false
+
+disruptor:
+  ringBufferSize: 64
+  waitStrategy: blocking
+  maxGlobalInFlight: 10
+
+timeouts:
+  requestTimeoutMs: 5000
+  connectTimeoutMs: 1000
+  healthCheckTimeoutMs: 1000
+
+retry:
+  maxRetries: 2
+  initialBackoffMs: 50
+  maxBackoffMs: 500
+  backoffMultiplier: 2.0
+
+healthCheck:
+  intervalMs: 60000
+  degradedThreshold: 3
+  downThreshold: 6
+  circuitBreakerFailureThreshold: 5
+  circuitBreakerRecoveryMs: 1000
+
+validation:
+  maxPromptLength: 10000
+  allowedModels: []
+
+metrics:
+  enabled: true
+  prefix: test_ollama_lb

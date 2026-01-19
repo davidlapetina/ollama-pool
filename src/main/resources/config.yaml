@@ -1,0 +1,108 @@
+# ============================================================
+# Ollama Load Balancer Configuration
+# ============================================================
+
+# Server configuration
+server:
+  port: 8080
+  host: 0.0.0.0
+  backlog: 100
+
+# Ollama node pool
+nodes:
+  - id: ollama-1
+    url: http://localhost:11434
+    models:
+      - llama2
+      - codellama
+      - mistral
+    maxConcurrentRequests: 5
+    weight: 2
+    enabled: true
+
+  - id: ollama-2
+    url: http://localhost:11435
+    models:
+      - llama2
+      - mistral
+    maxConcurrentRequests: 3
+    weight: 1
+    enabled: true
+
+  - id: ollama-3
+    url: http://localhost:11436
+    models:
+      - codellama
+      - phi
+    maxConcurrentRequests: 4
+    weight: 1
+    enabled: true
+
+# Load balancing strategy
+# Options: round-robin, weighted-round-robin, least-in-flight, random, model-aware
+strategy:
+  type: least-in-flight
+  adaptive: false
+
+# LMAX Disruptor configuration
+disruptor:
+  # Ring buffer size (must be power of 2)
+  ringBufferSize: 1024
+
+  # Wait strategy: yielding, blocking, busy-spin, sleeping
+  # - yielding: Low latency, uses CPU. Good for dedicated machines.
+  # - blocking: Higher latency, CPU friendly. Good for shared environments.
+  # - busy-spin: Lowest latency, burns CPU. Use only with dedicated cores.
+  # - sleeping: Balanced between latency and CPU.
+  waitStrategy: yielding
+
+  # Maximum concurrent requests across all nodes
+  maxGlobalInFlight: 500
+
+# Timeout configuration (in milliseconds)
+timeouts:
+  # Overall request timeout (including queue time)
+  requestTimeoutMs: 120000
+
+  # HTTP connection timeout
+  connectTimeoutMs: 10000
+
+  # Health check timeout
+  healthCheckTimeoutMs: 5000
+
+# Retry configuration
+retry:
+  maxRetries: 3
+  initialBackoffMs: 100
+  maxBackoffMs: 5000
+  backoffMultiplier: 2.0
+
+# Health check configuration
+healthCheck:
+  # Interval between health checks
+  intervalMs: 30000
+
+  # Consecutive failures before marking node as DEGRADED
+  degradedThreshold: 3
+
+  # Consecutive failures before marking node as DOWN
+  downThreshold: 6
+
+  # Circuit breaker failure threshold
+  circuitBreakerFailureThreshold: 5
+
+  # Circuit breaker recovery timeout
+  circuitBreakerRecoveryMs: 30000
+
+# Request validation
+validation:
+  # Maximum prompt length in characters
+  maxPromptLength: 100000
+
+  # Allowed models (empty = allow all)
+  allowedModels: []
+
+# Metrics configuration
+metrics:
+  enabled: true
+  prefix: ollama_lb
