@@ -163,6 +163,11 @@ public class OllamaHttpClient implements AutoCloseable {
             body.put("prompt", request.prompt());
         }
 
+        // Add images for vision models
+        if (request.images() != null && !request.images().isEmpty()) {
+            body.put("images", request.images());
+        }
+
         if (request.options() != null && !request.options().isEmpty()) {
             body.put("options", request.options());
         }

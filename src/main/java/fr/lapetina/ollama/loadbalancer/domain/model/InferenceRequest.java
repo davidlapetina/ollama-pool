@@ -15,6 +15,7 @@ public record InferenceRequest(
         String model,
         String prompt,
         List<Message> messages,
+        List<String> images,
         Map<String, Object> options,
         boolean stream,
         Instant createdAt,
@@ -35,6 +36,7 @@ public record InferenceRequest(
             correlationId = requestId;
         }
         messages = messages != null ? List.copyOf(messages) : List.of();
+        images = images != null ? List.copyOf(images) : List.of();
         options = options != null ? Map.copyOf(options) : Map.of();
     }
 
@@ -53,7 +55,20 @@ public record InferenceRequest(
      */
     public static InferenceRequest ofPrompt(String model, String prompt) {
         return new InferenceRequest(
-                null, model, prompt, null, null, false, null, null
+                null, model, prompt, null, null, null, false, null, null
+        );
+    }
+
+    /**
+     * Creates a vision request with prompt and images.
+     *
+     * @param model  the vision model name
+     * @param prompt the text prompt
+     * @param images list of base64-encoded images
+     */
+    public static InferenceRequest ofVision(String model, String prompt, List<String> images) {
+        return new InferenceRequest(
+                null, model, prompt, null, images, null, false, null, null
         );
     }
 
@@ -62,7 +77,7 @@ public record InferenceRequest(
      */
     public static InferenceRequest ofChat(String model, List<Message> messages) {
         return new InferenceRequest(
-                null, model, null, messages, null, false, null, null
+                null, model, null, messages, null, null, false, null, null
         );
     }
 
@@ -75,6 +90,7 @@ public record InferenceRequest(
         private String model;
         private String prompt;
         private List<Message> messages;
+        private List<String> images;
         private Map<String, Object> options;
         private boolean stream;
         private Instant createdAt;
@@ -100,6 +116,11 @@ public record InferenceRequest(
             return this;
         }
 
+        public Builder images(List<String> images) {
+            this.images = images;
+            return this;
+        }
+
         public Builder options(Map<String, Object> options) {
             this.options = options;
             return this;
@@ -122,7 +143,7 @@ public record InferenceRequest(
 
         public InferenceRequest build() {
             return new InferenceRequest(
-                    requestId, model, prompt, messages, options,
+                    requestId, model, prompt, messages, images, options,
                     stream, createdAt, correlationId
             );
         }

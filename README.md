@@ -10,6 +10,21 @@ A high-performance, configurable load balancer for dispatching LLM inference req
 - **Hot-Reload Configuration**: Update nodes and strategies without restart
 - **Comprehensive Observability**: Micrometer metrics, structured logging, health endpoints
 - **Backpressure Handling**: Graceful load shedding when at capacity
+- **Vision Model Support**: Native support for vision models with base64 image encoding
+
+## Release Notes
+
+### Version 1.1.0
+
+- **Vision/Image Support**: Added support for vision models (e.g., `llama3.2-vision`, `llava`)
+  - New `images` field in `InferenceRequest` for base64-encoded images
+  - New factory method `InferenceRequest.ofVision(model, prompt, images)`
+  - Builder support via `.images(List<String>)`
+  - Automatic inclusion of images in HTTP requests to Ollama
+
+### Version 1.0.0
+
+- Initial release with full load balancing capabilities
 
 ## Installation
 
@@ -19,14 +34,14 @@ A high-performance, configurable load balancer for dispatching LLM inference req
 <dependency>
     <groupId>io.github.ollama-pool</groupId>
     <artifactId>ollama-load-balancer</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.ollama-pool:ollama-load-balancer:1.0.0'
+implementation 'io.github.ollama-pool:ollama-load-balancer:1.1.0'
 ```
 
 ## Library Usage
@@ -43,13 +58,24 @@ import fr.lapetina.ollama.loadbalancer.domain.model.InferenceResponse;
 try (PipelineFactory factory = PipelineFactory.create("config.yaml").start()) {
     DisruptorPipeline pipeline = factory.getPipeline();
 
-    // Submit inference requests
+    // Submit text inference requests
     InferenceRequest request = InferenceRequest.ofPrompt("llama2", "Why is the sky blue?");
     CompletableFuture<InferenceResponse> future = pipeline.submit(request);
 
     // Handle the response
     InferenceResponse response = future.get();
     System.out.println(response.response());
+
+    // Submit vision requests (v1.1.0+)
+    byte[] imageBytes = Files.readAllBytes(Path.of("document.png"));
+    String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+    InferenceRequest visionRequest = InferenceRequest.ofVision(
+        "llama3.2-vision",
+        "Extract all text from this image",
+        List.of(base64Image)
+    );
+    InferenceResponse visionResponse = pipeline.submit(visionRequest).get();
+    System.out.println(visionResponse.response());
 }
 ```
 
@@ -97,10 +123,10 @@ public class Main {
 mvn clean package
 
 # Run with default config
-java -jar target/ollama-load-balancer-1.0.0.jar config.yaml
+java -jar target/ollama-load-balancer-1.1.0.jar config.yaml
 
 # Or with custom config
-java -jar target/ollama-load-balancer-1.0.0.jar /path/to/config.yaml
+java -jar target/ollama-load-balancer-1.1.0.jar /path/to/config.yaml
 ```
 
 ## API Endpoints
